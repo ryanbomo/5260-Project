@@ -21,5 +21,5 @@ One of the unspoken design philosophies of this project was to keep the implemen
 ## Testing
 The queries were scripted to run 1000 times, and timing was done with the linux command line program "time" as such:
 ```
-time ./test\_script\_3-1.sql
+time ./test_script_3-1.sql
 ```
