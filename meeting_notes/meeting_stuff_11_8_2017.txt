@@ -1,0 +1,62 @@
+On this project you can work in pairs. Due December 1st.
+
+
+Design a database for storing information about medical doctors, their patients, and ilnesses:
+
+[Done]
+1. Draw its E-R diagram.
+
+    doctors(employee_id*, first_name, last_name)
+    patients(patient_id*, first_name, last_name, phone, address, city, notes)
+    vitals(foregin(appointment_id), foregien(patient_id), weight, bp, height, pulse)
+    illnesses(unique_id*?, name, treatment, symptoms)
+    check-up(appointment_number, date-time, patient_id, doctor_id)
+    specialty(doctor_id, illness_id*?)
+    infected/infects(patient_id, illness_id*?)
+
+[IF we have time, libre draw or vizio] - 11/21/2017 - Stuart
+
+[Done] 
+2. Give a relational representation of the E-R diagram that allows for 2 
+functional preserving and lossless join decompositions. Describe its functional dependencies.
+    For 11/15/2017 Stuart will have this
+    
+[Done]
+3. Give the two decompositions and prove that they are lossless join and 
+functional preserving.
+    For 11/15/2017 Stuart will have this
+
+
+4. Give the SQL DDLs for creating the three versions of the database.
+    1 create_1.sql
+    2 create_2.sql - 11/18/2017
+    3 create_3.sql - 11/19/2017
+
+[Done]
+5. Fill the first database with data (at least 100 columns in each table).
+    1 insert.sql
+    For 11/15/2017 - Ryan will finish this
+
+6. Give the SQL queries to copy the data from the first version into its 2 decompositions.
+    Ryan 11/21/2017
+
+
+7. Propose in english 3 queries that require at least 2 table joins each and such that all 
+tables are involved in at least 2 queries.
+    For 11/15/2017 - Ryan Will Do This
+    Query 3 - Stuart 11/21/2017
+
+
+8. Propose SQL implementations of the 3 queries on all three versions of the database.
+    1. For 11/16/2017 Ryan will Do first one
+    2. For 11/21/2017 Ryan
+    3. For 11/21/2017 Ryan
+
+
+*9.* Test the time in ns for exeuting the 3 queries on each database, by running each of them 1000 times.
+    1.
+    2.
+    3.
+
+Submit the databases populated with data, a file for each ddl (d.ddl, d1.ddl, d2.ddl), and a 
+report with a separate section for which of the above points.

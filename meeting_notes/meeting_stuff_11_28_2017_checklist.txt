@@ -1,0 +1,22 @@
+Ryan To Do:
+    - Give better symptoms than just the random 4 - 11/22/2017
+    - Scripts for Query Testing - 11/28/2017
+    - TESTING for Scripts - 11/29/2017
+    - Report 12/1/2017
+
+Stuart To Do:
+    - Report - 12/1/2017
+
+
+
+Over All Progress:
+    Section 1   DONE
+    Section 2   DONE
+    Section 3   DONE
+    Section 4   DONE
+    Section 5   DONE
+    Section 6   Some Issues with DB_1 queries - fix 11/30/2017
+    Section 7   DONE
+    Section 8   DONE
+    Section 9   IN PROGRESS - Testing 11/30/2017
+    Report      IN PROGRESS - Final Version - 12/1/2017

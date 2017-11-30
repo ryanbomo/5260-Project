@@ -1,0 +1,21 @@
+Ryan To Do:
+    - Scripts for Query Testing - 11/24/2017
+
+Stuart To Do:
+    - Query 3 in English - 11/24/2017
+    - Query 3 in SQL - 11/24/2017
+    - Report Stuff - 11/24/2017
+
+
+
+Over All Progress:
+    Section 1   DONE
+    Section 2   DONE
+    Section 3   DONE
+    Section 4   DONE
+    Section 5   DONE
+    Section 6   DONE
+    Section 7   IN PROGRESS - Query 3
+    Section 8   IN PROGRESS - Query 3
+    Section 9   IN PROGRESS - All Still To Do
+    Report      IN PROGRESS

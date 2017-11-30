@@ -1,0 +1,7 @@
+1. Find the name of the patient, the name of the doctor, the name of the illness, and the patients bp_sys and bp_dia for all patients who had an appointment on [DATE].
+    - Uses Doctors, Patients, Illnesses, Checkup, Vitals tables
+
+2. Find the list of potential doctors that can work on the disease infecting patients whos first_names are [First_Name]
+     - Uses Doctors, Patients, Specialty and Infected tables
+
+3.Find the names of all patients who have been treated for [ILLNESS] by [DOCTOR] and have BMI over 25.
