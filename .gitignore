@@ -1,0 +1,4 @@
+*.db
+*.kdev4
+*.tar.bz2
+run.sh
