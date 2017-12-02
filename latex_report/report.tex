@@ -1,0 +1,411 @@
+\documentclass[12pt]{article}
+\renewcommand{\baselinestretch}{1.05}
+\usepackage{amsmath,amsthm,verbatim,amssymb,amsfonts,amscd, graphicx, listings}
+\usepackage{color}
+\usepackage{graphics}
+\topmargin0.0cm
+\headheight0.0cm
+\headsep0.0cm
+\oddsidemargin0.0cm
+\textheight23.0cm
+\textwidth16.5cm
+\footskip1.0cm
+\setlength\parindent{0pt}
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem*{surfacecor}{Corollary 1}
+\newtheorem{conjecture}{Conjecture} 
+\newtheorem{question}{Question} 
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+ 
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+ 
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+\def\ojoin{\setbox0=\hbox{$\bowtie$}%
+  \rule[-.02ex]{.25em}{.4pt}\llap{\rule[\ht0]{.25em}{.4pt}}}
+\def\leftouterjoin{\mathbin{\ojoin\mkern-5.8mu\bowtie}}
+\def\rightouterjoin{\mathbin{\bowtie\mkern-5.8mu\ojoin}}
+\def\fullouterjoin{\mathbin{\ojoin\mkern-5.8mu\bowtie\mkern-5.8mu\ojoin}}
+
+\begin{document}
+\title{Medical Records Database\\
+\large A SQLite Implementation}\author{\textbf{ Ryan Bomalaski \& Stuart Hernandez} \\ CSE 5290/4020\\ Dr. Marius Silaghi}
+\date{12/01/2017}
+\maketitle
+
+
+%=========================================================================%
+%=========================================================================%
+\section*{Introduction}
+Electronic medical records are an organized collection of the medical information pertaining to a hospital or insurance systems patients and the details of their care.$^{1}$  Health Information Management is a quickly growing field, and in order to meet the primary needs of security and speed, great strides have been made in both database technology and database design for EMR.$^{2}$ It is the goal of this project to emulate a simple EMR database in order to high light proper database design, implementation and testing methods using freely available tools such as SQLite3 and Python.
+\\
+%=========================================================================%
+%=========================================================================%
+\section*{Design}
+The main considerations when designing the database was that it must store information about the doctors, their patients, and their illnesses. Since those were the three important aspects of the database each one was created as an entity, the relevant attributes were given to them, and the proper relations between the entities were established.\\
+\begin{center}
+\includegraphics[width = 15cm]{DBSProgER.png}\\
+\footnotesize{\textit{\textbf{Fig. 1:} ER Representation}}
+\end{center}
+The database is composed of the following relations:\\
+$Doctors\lbrace \underline{e-id}, first-Name, last-Name\rbrace\\
+Patient \lbrace \underline{p-id}, address, first-Name, last-Name, city, notes, phone \rbrace \\
+Illness \lbrace \underline{i-id}, name, symptoms, treatment \rbrace \\
+Check-Up \lbrace \underline{a-id}, \underline{e-id}, \underline{p-id}, date-time, height, pulse, weight, by-sys, bp-dia \rbrace \\
+Specialty \lbrace \underline{e-id}, \underline{i=id} \rbrace \\
+Infected \lbrace \underline{p-id}, \underline{i-id} \rbrace \\$\\
+The database contains the following relational dependencies:\\
+$i-id \rightarrow name, symptoms, treatment\\
+e-id \rightarrow Doctors.first-Name, Doctors.last-Name\\
+p-id \rightarrow address, city, notes, phone, Patient.first-Name, patient.last-Name\\
+a-id \rightarrow p-id, e-id, date-time, height, pulse, weight, bp-sys, bp-dia \\$\\
+For the first decomposition the check-up relation was decomposed to add a vitals relation as follows: \\
+$Check-Up \lbrace \underline{a-id}, \underline{e-id}, \underline{p-id}, date-time \rbrace \\
+Vitals \lbrace \underline{a-id}, height, pulse, weight, by-sys, bp-dia \rbrace \\$\\
+This decomposition is both dependency preserving and has a lossless join. For a decomposition to have a lossless join $ \left( R1 \cap R2 \right) \rightarrow R1 $ or $ \left( R1 \cap R2 \right) \rightarrow R2 $. This is the case for our decomposition which can be shown as follows:\\
+$ \left( R1 \cap R2 \right) \rightarrow R1 \\
+\lbrace a-id, e-id, p-id, date-time \rbrace \cap \lbrace a-id, height, pulse, weight, by-sys, bp-dia \rbrace \rightarrow \lbrace a-id, e-id, p-id, date-time \rbrace \\
+a-id \rightarrow \lbrace a-id, e-id, p-id, date-time \rbrace \\
+$\\
+This is valid according to our fourth functional dependency. To prove a decomposition is dependency preserving if $ \lbrace F_1 \cup F_2 \cup ... \cup F_n \rbrace = F^{+} $ where $ F^{+}$ is the closure of the original functional dependencies and $ F_i $ is a functional dependency from the decomposed database that relates to the same attributes as the closure of the original database. This decomposition is dependency preserving which can be shown as follows:\\
+$ \lbrace F_1 \cup F_2 \cup ... \cup F_n \rbrace = F^{+}\\
+\lbrace a-id \rightarrow e-id, p-id, date-time \cup a-id \rightarrow height, pulse, weight, by-sys, bp-dia \rbrace = a-id \rightarrow p-id, e-id, date-time, height, pulse, weight, bp-sys, bp-dia \\
+\lbrace a-id \rightarrow e-id, p-id, date-time, height, pulse, weight, by-sys, bp-dia \rbrace = a-id \rightarrow p-id, e-id, date-time, height, pulse, weight, bp-sys, bp-dia \\
+$\\
+This shows that all the functional dependencies of the related attributes are retained in the decomposition, and therefore this composition is both lossless and dependency preserving.\\ \\
+For the second decomposition the illness relation was decomposed to add a symptoms relation as follows: \\
+$
+Illness \lbrace \underline{i-id}, name, treatment \rbrace \\
+Symptom \lbrace \underline{i-id}, symptoms \rbrace \\
+$\\
+This decomposition is both dependency preserving and has a lossless join. For a decomposition to have a lossless join $ \left( R1 \cap R2 \right) \rightarrow R1 $ or $ \left( R1 \cap R2 \right) \rightarrow R2 $. This is the case for our decomposition which can be shown as follows:\\
+$ \left( R1 \cap R2 \right) \rightarrow R1 \\
+\lbrace i-id, name, treatment \rbrace \cap \lbrace i-id, symptoms \rbrace \rightarrow \lbrace i-id, name, treatment \rbrace \\
+i-id \rightarrow \lbrace i-id, name, treatment \rbrace \\
+$\\
+This is valid according to our third functional dependency. To prove a decomposition is dependency preserving if $ \lbrace F_1 \cup F_2 \cup ... \cup F_n \rbrace = F^{+} $ where $ F^{+}$ is the closure of the original functional dependencies and $ F_i $ is a functional dependency from the decomposed database that relates to the same attributes as the closure of the original database. This decomposition is dependency preserving which can be shown as follows:\\
+$ \lbrace F_1 \cup F_2 \cup ... \cup F_n \rbrace = F^{+}\\
+\lbrace i-id \rightarrow name, treatment \cup i-id \rightarrow symptoms \rbrace = i-id \rightarrow name, treatment, symptoms \\
+\lbrace i-id \rightarrow name, treatment, symptoms \rbrace = i-id \rightarrow name, treatment, symptoms \\
+$\\
+This shows that all the functional dependencies of the related attributes are retained in the decomposition, and therefore this composition is both lossless and dependency preserving.\\
+%=========================================================================%
+%=========================================================================%
+\section*{Data Creation}
+In order for the database to better represent what a hospital or insurance network might utilize, a random record generator was developed in the Python language. As this was just a tool to fill in data for our database, it did not need to be secure nor did it need to be extremely quick. Python was chosen because it was seen to be good enough.
+\\
+\begin{center}
+\includegraphics[width = 8cm]{vital_gen_photo.png}\\
+\footnotesize{\textit{\textbf{Fig. 2:} Example output of the create\_vitals() function.}}
+\end{center}
+The generator, called \textit{insert\_generator\_db2.py}, creates SQL insert commands for seven of the database's tables: \textit{doctors, patients, vitals, infected, specialty, illness and check\_up}.  Each table has its own method for generating an output of the sql commands.  They are named as follows:\textit{create\_doctors, create\_patients, create\_vitals, create\_infected, create\_specialty, create\_checkup, and create\_illness}.  Vitals was included as a separately generated table because at the time of the generator program's creation, the \textit{vitals} table was still separate from the \textit{check\_up} table.  This design became database 2, and as a result the generator was named for the fact that it generates information for database 2.  The source code for the generator is attached and can also be found at the project's Github page.$^{3}$\\
+
+%=========================================================================%
+%=========================================================================%
+\section*{Implementation}
+SQLite3 was chosen for the database engine because it is a simple to implement but still robust and powerful SQL implementation.  The project fit perfectly into SQLite's ideal usage scenarios, both as a piece of educational software and as a means of demonstrating an enterprise database for testing.$^{4}$  A client/server model would have been overly complicated, though it may have better represented the implementation of a production level medical records database.  Still, the goal of this project was to demonstrate database design, testing and implementation, not as an overview of database engines.  The specifics of the engine should not change the design or the testing results.
+\\
+\\
+The contents of the DDL file used to create Database\_1, \textit{create\_1.sql}, can be found below:
+\begin{lstlisting}[language =SQL]
+--Create Doctors Table
+CREATE TABLE doctors (
+  id INTEGER PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL
+);
+
+-- Create Patients Table
+CREATE TABLE patients (
+  id INTEGER PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  phone INTEGER NOT NULL,
+  address TEXT NOT NULL,
+  city TEXT NOT NULL,
+  notes TEXT
+);
+
+-- Create illnesses Table
+CREATE TABLE illnesses (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  treatment TEXT NOT NULL,
+  symptoms TEXT NOT NULL
+);
+
+-- Create check_up Table
+CREATE TABLE check_up (
+  id INTEGER PRIMARY KEY,
+  date_time TEXT NOT NULL,
+  patient_id INTEGER,
+  doctor_id INTEGER,
+  weight INTEGER,
+  bp_sys INTEGER,
+  bp_dia INTEGER,
+  height INTEGER,
+  pulse INTEGER,
+  FOREIGN KEY(patient_id) REFERENCES patients(id),
+  FOREIGN KEY(doctor_id) REFERENCES doctors(id)
+);
+
+-- Create specialty Table
+CREATE TABLE specialty (
+  id INTEGER PRIMARY KEY,
+  doctor_id INTEGER,
+  illness_id INTEGER,
+  FOREIGN KEY(doctor_id) REFERENCES doctors(id),
+  FOREIGN KEY(illness_id) REFERENCES illnesses(id)
+);
+
+-- Create infected Table
+CREATE TABLE infected (
+  id INTEGER PRIMARY KEY,
+  patient_id INTEGER,
+  illness_id INTEGER,
+  FOREIGN KEY(patient_id) REFERENCES patients(id),
+  FOREIGN KEY(illness_id) REFERENCES illnesses(id)
+);
+\end{lstlisting}
+
+Databases 2 and 3 were created by using the DML files \textit{update\_to\_db\_2.sql} and \textit{update\_to\_db\_3.sql}.  Each of the queries from the Queries section was run on each database to ensure proper data migration.\\
+
+%=========================================================================%
+%=========================================================================%
+\section*{Queries}
+In order to test the database, three queries were proposed.  In plain English, the queries are as follows:
+\begin{enumerate}
+\item Find the full patient name, the full doctor name, the name of the patient's illness, and the patient's blood pressure for any patient who had an appointment on September 30th, 2008 at 9:00 AM.
+\item Find the list of potential doctors that can most effectively work on any disease infecting a patient with the first name Samantha.
+\item Find the names of all patients who have been treated for Malaria by a Dr. Harmon and have a BMI over 25.
+\end{enumerate}
+\textbf{Relation Algebra - Query 1}\\
+$ r1 \leftarrow \sigma _{date-time= 09/30/2008 09:00 AM}Check-Up\\
+r2 \leftarrow \rho_{first-Name=d.firstName, last-Name = d.lastName}Doctors \\
+r3 \leftarrow \rho_{first-Name=d.firstName, last-Name = p.lastName}Patients\\
+r4 \leftarrow r2 \bowtie r1 \bowtie r3 \bowtie Infected \bowtie Illness \bowtie Check-Up\\
+\Pi_{d.firstName, d.lastName, p.firstName, p.lastName, name, bp-sys, bp-dia} r4 \\
+$\\
+\textbf{Relation Algebra - Query 2}\\
+$ r1 \leftarrow \rho_{first-Name=d.firstName, last-Name = d.lastName}Doctors \\
+r2 \leftarrow \rho_{first-Name=d.firstName, last-Name = p.lastName}Patients\\
+r3 \leftarrow \sigma _{firstName = Samatha} r2 \bowtie Infected \bowtie Illness \\
+r4 \leftarrow r1 \bowtie Specialty \bowtie r2 \\
+\Pi_{d.firstName, d.lastName} r4\\
+$\\
+\textbf{Relational Algebra - Query 3}\\  
+$ r1 \leftarrow \left(\sigma _{weight / height^{2} > 25}Checkup\right)\\
+r2 \leftarrow \left(\sigma _{name = Malaria}Illness\right)\\
+r3 \leftarrow \left(\sigma _{first_name = Francis and last_name = Harmon}Doctors\right)\\
+\Pi _{name}\left(\left(r1 \bowtie Patients \bowtie Infected \bowtie r2 \bowtie Specialty \bowtie r3\right)\right)$\\
+\\
+\textbf{SQL}\\
+Below are SQL representations of the above queries as pertaining to Database 1.  The queries for Databases 2 and 3 are attached to the project and can also be found on the project's github page.$^{3}$\\
+\\
+\textbf{SQL- Database 1 - Query 1}
+\begin{lstlisting}[language =SQL]
+SELECT 
+    patients.first_name AS patient_first_name, patients.last_name AS patient_last_name, doctors.first_name AS doctor_first_name, doctors.last_name AS doctor_last_name, illnesses.name, check_up.bp_sys, check_up.bp_dia
+FROM
+    patients 
+    INNER JOIN 
+        check_up 
+ON 
+        patients.id = check_up.patient_id
+    INNER JOIN
+        doctors
+ON
+        doctors.id = check_up.doctor_id
+    INNER JOIN
+        infected
+on
+        infected.patient_id = patients.id
+    INNER JOIN
+        illnesses
+on
+        infected.illness_id = illnesses.id
+WHERE
+    check_up.date_time = '09/30/2008 09:00 AM';
+\end{lstlisting}
+
+\textbf{SQL- Database 1 - Query 2}
+\begin{lstlisting}[language =SQL]
+SELECT
+    doctors.first_name, doctors.last_name
+FROM
+    doctors
+    INNER JOIN
+        specialty
+ON
+    specialty.doctor_id = doctors.id
+    INNER JOIN
+        infected
+ON
+    infected.illness_id = specialty.illness_id
+    INNER JOIN
+        patients
+ON
+    patients.id = infected.patient_id
+WHERE
+    patients.first_name = 'SAMANTHA';
+\end{lstlisting}
+\textbf{SQL- Database 1 - Query 3}
+\begin{lstlisting}[language =SQL]
+SELECT
+    patients.first_name, patients.last_name
+FROM
+    patients
+    INNER JOIN
+        check_up
+ON
+    check_up.patient_id = patients.id 
+    INNER JOIN
+        infected
+ON
+    patients.id = infected.patient_id
+    INNER JOIN
+        illnesses
+ON
+    infected.illness_id = illnesses.id
+    INNER JOIN
+        doctors
+ON
+    check_up.doctor_id = doctors.id
+WHERE
+    doctors.last_name = "HARMON" 
+    AND illnesses.name = "MALARIA" 
+    AND (check_up.weight*.45) / ((check_up.height*.025) * (check_up.height*.025)) > 25;
+\end{lstlisting}
+%=========================================================================%
+%=========================================================================%
+\section*{Testing}
+Each of out database implementations were tested both to ensure data preservation as well as query expediency.  For each database, each query was run 1000 times and was timed during the execution of the queries.  To facilitate this testing, bash scripts were written with the following layout.
+\begin{lstlisting}[language=bash]
+#!/bin/bash
+cd ../
+cd sql_files
+cd database_1
+sqlite3 db_1.db ".read sql_queries_1-1.sql"
+...
+sqlite3 db_1.db ".read sql_queries_1-1.sql"
+\end{lstlisting}
+\begin{center}
+\footnotesize{\textbf{test\_script\_1-1.sh:}Where line 6 represents 998 other calls identical to line 5}
+\end{center}
+In order to time the execution of these scripts, the Unix command \textit{time} was used. This command returns information on the real time taken to execute a command, the time the command was in user space, and the time it was in system space.\\
+\begin{lstlisting}
+time test_script_1-1.sh
+\end{lstlisting}
+\begin{center}
+\includegraphics[width = 5cm]{time_script.png}\\
+\footnotesize{\textit{\textbf{Fig. NUM:} Example output of time Unix command}}
+\end{center}
+A script containing just the first 4 lines of each test script was also run, and these times were subtracted from the full test script values.  This was done in order to account for any time that may have been used for the navigation commands.  However, it was found that the time tool was not exact enough to measure their execution.  As such, it was assumed that the navigation time was negligible in comparison to query time.\\
+\\
+BASH was also used for database creation scripts, allowing the creation and testing of the databases to be fulling scripted and workable from the command line.\\
+
+%=========================================================================%
+%=========================================================================%
+\section*{Results}
+After testing it was found that the queries performed quite quickly, with most taking only small fractions of a second to complete their queries in system and user space.
+\begin{center}
+ \begin{tabular}{||c c c c||} 
+ \hline
+  & REAL & SYS & USER \\ [0.5ex] 
+ \hline\hline
+ DB 1 - Q 1 & 2.022 & .0492 & .052 \\ 
+ \hline
+ DB 1 - Q 2 & 2.172 & 0.400 & 0.600 \\
+ \hline
+ DB 1 - Q 3 & 1.845 & 0.088 & 0.152 \\
+ \hline
+ DB 2 - Q 1 & 1.733 & 0.116 & 0.128\\
+ \hline
+ DB 2 - Q 2 & 2.387 & 0.228 & 0.356 \\ 
+ \hline
+ DB 2 - Q 3 & 2.361 & 0.316 & 0.324 \\
+ \hline
+ DB 3 - Q 1 & 1.690 & 0.136 & 0.180 \\
+ \hline
+ DB 3 - Q 2 & 2.155 & 0.104 & 0.224 \\
+ \hline
+ DB 3 - Q 3 & 1.626 & 0.060 & 0.1040 \\[1ex] 
+ \hline
+\end{tabular}
+\centerline{\textit{\textbf{Table 1:}}Results for 1000 executions of each query}
+\end{center}
+\begin{center}
+ \begin{tabular}{||c c c c||} 
+ \hline
+  & REAL & SYS & USER \\ [0.5ex] 
+ \hline\hline
+ DB 1 - Q 1 & 0.002022 & 0.000492 & 0.00052 \\ 
+ \hline
+ DB 1 - Q 2 & 0.002172 & 0.0004 & 0.0006 \\
+ \hline
+ DB 1 - Q 3 & 0.001845 & 0.000088 & 0.000152 \\
+ \hline
+ DB 2 - Q 1 & 0.001733 & 0.000116 & 0.000128 \\
+ \hline
+ DB 2 - Q 2 & 0.002387 & 0.000228 & 0.000356 \\ 
+ \hline
+ DB 2 - Q 3 & 0.002361 & 0.000316 & 0.000324 \\
+ \hline
+ DB 3 - Q 1 & 0.00169 & 0.000136 & 0.00018 \\
+ \hline
+ DB 3 - Q 2 & 0.002155 & 0.000104 & 0.000224 \\
+ \hline
+ DB 3 - Q 3 & 0.001626 & 0.00006 & 0.000104 \\[1ex] 
+ \hline
+\end{tabular}
+\centerline{\textit{\textbf{Table 2:}}Results for 1 executions of each query}
+\end{center}
+
+
+%=========================================================================%
+%=========================================================================%
+\section*{Conclusion}
+In summation, it has been shown that a simple but effective medical records database can be designed, implemented and tested using free to use tools.  SQLite3 was shown to be effective and quick in performing selection queries and would perform admirably as a platform for creating quick proofs of concept.\\
+\\
+Further testing could be done to look into the speed of UPDATE queries, though making dynamic update can be problematic.  Likewise, server/client layouts should be explored for the EMR realm as well.
+\pagebreak
+%=========================================================================%
+%=========================================================================%
+\section*{Bibliography}
+${1}$ \textit{Electronic Medical Records}, Luo. J, \textit{Primary Psychiatry}, Feb. 1, 2006
+\\
+\\
+${2}$ \textit{Embracing the Future: New Times, New Opportunities for Health Information Managers},http://library.ahima.org/doc?oid=58258\#.WiIPqvZOlqs \textit{American Health Information Management Association}
+\\
+\\
+${3}$ https://github.com/ryanbomo/5260-Project
+\\
+\\
+${4}$\textit{Appropriate Uses For SQLite} https://sqlite.org/whentouse.html
+\end{document}
